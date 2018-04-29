@@ -21,7 +21,8 @@ Route::get('/', function () {
 });
 
 Route::get('/home', 'HomeController@index')->name('home');
-    
+//import csv    
+Route::post('import', 'ImportController@importCSV');    
     
 });
 
