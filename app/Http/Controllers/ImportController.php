@@ -48,8 +48,15 @@ public function importCSV(Request $request)
                         $staging->zip = $row[6];
                     }
                     $staging->listName = $row[7];
-                    //$staging->cashDonation = $row[8];
-                    //$staging->previousAttendee = $row[9];
+                    //check if cash donation column exist
+                    if (isset($row[8]) && is_numeric($row[8])) {
+                     $staging->cashDonation = $row[8];
+                    }
+                    //check if previous attendee column exist
+                    if (isset($row[9])) {
+                     $staging->previousAttendee = $row[9];
+                    }
+                    
                     //SAVE TO STAGING TABLE
                     $staging->save();
                 
@@ -75,15 +82,17 @@ public function importCSV(Request $request)
                              $googleCity = $googleFormattedAddress[1];
                              $googleStateZip = explode(" ", $googleFormattedAddress[2]);
                              $googleState = $googleStateZip[0];
-                             $googleZip = $googleStateZip[2];
+                             $googleZip = $googleStateZip[1];
                             
-                        //CREATE NEW USER
+                        //CHECK IF RECORD ALREADY EXIST IN THE WORKING TABLE(WE CHECK FOR ADDRESS1 AND LAST NAME)
+                         if (Working::where('addr1', '=', $googleAddr1)->where('lName', '=', $row[1])->count() == 0) {    //CREATE NEW USER
                             $fNameFirstChar = substr(strtolower($row[0]), 0, 1);
                             $userData = [
                                 'username' => $fNameFirstChar.strtolower($row[1]),
                                 'password' => bcrypt('123456'),
                                 'isAdmin' => 0,
                             ];
+                                        
                         //SAVE INTO WORKING TABLE
                             $newUser = User::create($userData);   
                             $working = new Working();
@@ -95,10 +104,19 @@ public function importCSV(Request $request)
                             $working->city =  $googleCity;
                             $working->state = $googleState;
                             $working->zip = $googleZip;
+                            $working->listName = $row[7]; 
+                            //check if cash donation column exist
+                            if (isset($row[8]) && is_numeric($row[8])) {
+                             $working->cashDonation = $row[8];
+                            } 
+                            //check if previous attendee column exist
+                            if (isset($row[9])) {
+                             $working->previousAttendee = $row[9];
+                            } 
                             $working->save();
                             
-                            
-                            //echo $validAddress['results'][0]['formatted_address'].'<br>';
+                            }    
+                           
                         }     
                 
                         
