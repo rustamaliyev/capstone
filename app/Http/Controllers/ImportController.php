@@ -30,8 +30,9 @@ public function importCSV(Request $request)
                 //$index is the CSV row index
                 $staging = new Staging();  
                
-                //don't save header row
+                //SKIP IF HEADER ROW
                 if($row[0] == 'FirstName') {continue;} 
+                //SKIP IF ADDRESS OR CITY COLUMNS ARE EMPTY
                 if($row[2] == '' || $row[4] == '') {continue;}
                 
                     $staging->fName = $row[0];
@@ -49,26 +50,60 @@ public function importCSV(Request $request)
                     $staging->listName = $row[7];
                     //$staging->cashDonation = $row[8];
                     //$staging->previousAttendee = $row[9];
-
+                    //SAVE TO STAGING TABLE
                     $staging->save();
-                    //STEP TWO CHECK THE ADDRESS VALIDITY VIA GOOGLE MAPS API
-                    $addressParams = $row[2].$row[3].$row[4].$row[5].$row[6];
-                    $formatAddressParams = str_replace(" ", "+", $addressParams);
-                    $validateAddress = "https://maps.googleapis.com/maps/api/geocode/json?address=".$formatAddressParams."&key=".$apiKey;        
+                
+                    //STEP TWO CHECK THE ADDRESS VALIDITY VIA GOOGLE GEOCODING API
+                    //DATA CLEANUP TO GET CORRECT RESULTS FROM GOOGLE
+                    $addr1 = str_replace("#", "apt", $row[2]); 
+                    $addressParams = $addr1.$row[3].$row[4].$row[5].$row[6];
+                    $addressParams = str_replace(" ", "+", $addressParams);
+                
+                    //SEND DATA OVER TO GOOGLE API USING CURL
+                    $validateAddress = "https://maps.googleapis.com/maps/api/geocode/json?address=".$addressParams."&sensor=true&key=".$apiKey;        
                         $ch = curl_init();
                         curl_setopt($ch, CURLOPT_URL, $validateAddress);
                         curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
                         $json = curl_exec($ch);    
-                        $validAddress = json_decode($json,true);     
+                     //DECODE JSON DATA
+                        $validAddress = json_decode($json,true);    
+                     //IF ANY RESULT FROM GOOGLE  
+                        if (isset($validAddress['results'][0])) {
+                            $googleFormattedAddress = explode(",", $validAddress['results'][0]['formatted_address']);
+                     //SAVE GOOGLE RESULTS INTO VARIABLES       
+                             $googleAddr1 = $googleFormattedAddress[0];
+                             $googleCity = $googleFormattedAddress[1];
+                             $googleStateZip = explode(" ", $googleFormattedAddress[2]);
+                             $googleState = $googleStateZip[0];
+                             $googleZip = $googleStateZip[2];
+                            
+                        //CREATE NEW USER
+                            $fNameFirstChar = substr(strtolower($row[0]), 0, 1);
+                            $userData = [
+                                'username' => $fNameFirstChar.strtolower($row[1]),
+                                'password' => bcrypt('123456'),
+                                'isAdmin' => 0,
+                            ];
+                        //SAVE INTO WORKING TABLE
+                            $newUser = User::create($userData);   
+                            $working = new Working();
+                            $working->userID = $newUser->id;
+                            $working->stagingID = $staging->id;
+                            $working->fName = $row[0];
+                            $working->lName = $row[1];
+                            $working->addr1 = $googleAddr1;
+                            $working->city =  $googleCity;
+                            $working->state = $googleState;
+                            $working->zip = $googleZip;
+                            $working->save();
+                            
+                            
+                            //echo $validAddress['results'][0]['formatted_address'].'<br>';
+                        }     
                 
-                
-                        if (isset($validAddress['results'][0]['formatted_address'])) {
-                            echo $validAddress['results'][0]['formatted_address'];    
-                        }                
-                          
                         
-                        
-                   
+                    
+            
                 }
             $time = microtime(true) - $_SERVER["REQUEST_TIME_FLOAT"];
             echo "Process Time: {$time}";    
