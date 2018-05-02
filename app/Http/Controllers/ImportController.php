@@ -29,11 +29,10 @@ public function importCSV(Request $request)
                 //$row is an array where each item represent a CSV data cell
                 //$index is the CSV row index
                 $staging = new Staging();  
-               
-                //SKIP IF HEADER ROW
-                if($row[0] == 'FirstName') {continue;} 
-                //SKIP IF ADDRESS OR CITY COLUMNS ARE EMPTY
-                if($row[2] == '' || $row[4] == '') {continue;}
+             
+//SKIP IF FOLLOWING IS TRUE: HEADER ROW, ADDRESS OR CITY COLUMNS ARE EMPTY,ADDRESS1 CONTAINS P.O. BOX                
+if($row[0] == 'FirstName' || $row[2] == '' || $row[4] == '' || preg_match('/(?:P(?:ost(?:al)?)?[\.\-\s]*(?:(?:O(?:ffice)?[\.\-\s]*)?B(?:ox|in|\b|\d)|o(?:ffice|\b)(?:[-\s]*\d)|code)|box[-\s\b]*\d)/i',$row[2]))
+{continue;}                
                 
                     $staging->fName = $row[0];
                     $staging->lName = $row[1];
@@ -82,7 +81,10 @@ public function importCSV(Request $request)
                              $googleCity = $googleFormattedAddress[1];
                              $googleStateZip = explode(" ", $googleFormattedAddress[2]);
                              $googleState = $googleStateZip[0];
-                             $googleZip = $googleStateZip[1];
+                            
+                            if (isset($googleStateZip[2])) {
+                             $googleZip = $googleStateZip[2];
+                            }else {$googleZip = '00000';}
                             
                         //CHECK IF RECORD ALREADY EXIST IN THE WORKING TABLE(WE CHECK FOR ADDRESS1 AND LAST NAME)
                          if (Working::where('addr1', '=', $googleAddr1)->where('lName', '=', $row[1])->count() == 0) {    //CREATE NEW USER
@@ -127,4 +129,14 @@ public function importCSV(Request $request)
             echo "Process Time: {$time}";    
         }
     }
+    
+    public function getAllRecords()
+    {
+        
+        $working = Working::all();
+        echo '{ "data":'.$working->toJson().'}';
+
+
+    }
+    
 }

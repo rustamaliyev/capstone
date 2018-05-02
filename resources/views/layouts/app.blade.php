@@ -26,6 +26,14 @@
     <!-- Custom Fonts -->
     <link href="{{ asset('vendor/font-awesome/css/font-awesome.min.css') }}" rel="stylesheet" type="text/css">
 
+    
+    <!-- DataTables CSS -->
+    <link href="{{ asset('vendor/datatables-plugins/dataTables.bootstrap.css') }}" rel="stylesheet" type="text/css">
+
+    <!-- DataTables Responsive CSS -->
+    <link href="{{ asset('vendor/datatables-responsive/dataTables.responsive.css') }}" rel="stylesheet" type="text/css">
+
+    
     <!-- HTML5 Shim and Respond.js IE8 support of HTML5 elements and media queries -->
     <!-- WARNING: Respond.js doesn't work if you view the page via file:// -->
     <!--[if lt IE 9]>
@@ -119,6 +127,50 @@
     <!-- Custom Theme JavaScript -->
     <script src="{{ asset('dist/js/sb-admin-2.js') }}"></script>
 
+    <!-- DataTables JavaScript -->
+    <script src="{{ asset('vendor/datatables/js/jquery.dataTables.min.js') }}"></script>
+    <script src="{{ asset('vendor/datatables-plugins/dataTables.bootstrap.min.js') }}"></script>
+    <script src="{{ asset('vendor/datatables-responsive/dataTables.responsive.js') }}"></script>
+    <script>
+        /*
+    $(document).ready(function() {
+        $('#dataTables-example').DataTable({
+            responsive: true
+        });
+    });*/
+
+    $(document).ready(function() {
+    $('#working').DataTable( {
+        "draw": 1,
+        "recordsTotal": 2,
+        "recordsFiltered": 2,
+        "pagingType": "full_numbers",
+        "paging": true,
+        "lengthMenu": [10, 25, 50, 75, 100],
+        "processing": true,
+        "serverSide": false,
+        "ajax": "http://localhost:8888/capstone/public/allrecords",
+        columns: [
+            { data: 'id', name: 'id' },
+            { data: 'fName', name: 'fName' },
+            { data: 'lName', name: 'lName' },
+            { data: 'addr1', name: 'addr1' },
+            { data: 'addr2', name: 'addr2' },
+            { data: 'city', name: 'city' },
+            { data: 'state', name: 'state' },
+            { data: 'zip', name: 'zip' },
+            { data: 'listName', name: 'listName' },
+            { data: 'cashDonation', name: 'cashDonation' },
+            { data: 'previousAttendee', name: 'previousAttendee' },
+            
+        
+        ]
+        } );
+    } );    
+        
+        
+    </script>
+    
     
 </body>
 </html>

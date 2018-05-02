@@ -21,6 +21,9 @@ Route::get('/', function () {
 });
 
 Route::get('/home', 'HomeController@index')->name('home');
+Route::get('/allrecords', 'ImportController@getAllRecords')->name('all');
+Route::get('edit/{id}', 'UserController@edit');
+Route::post('edit/{id}','UserController@update');    
 //import csv    
 Route::post('import', 'ImportController@importCSV');    
     

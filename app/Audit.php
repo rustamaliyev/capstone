@@ -4,10 +4,10 @@ namespace App;
 
 use Illuminate\Database\Eloquent\Model;
 
-class Working extends Model
+class Audit extends Model
 {
 
-
+    public $table = "audit";
     public function user() {
 
         return $this->belongsTo(User::class,'changedByUserID');
