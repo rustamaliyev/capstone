@@ -98,6 +98,7 @@
                 <div class="row">
                     <div class="col-lg-12">
                         <h1 class="page-header">Dashboard</h1>
+                        <?php echo url('/'); ?>
                         @yield('content')
                         
                     </div>
@@ -149,7 +150,7 @@
         "lengthMenu": [10, 25, 50, 75, 100],
         "processing": true,
         "serverSide": false,
-        "ajax": "http://localhost:8888/capstone/public/allrecords",
+        "ajax": " <?php echo url('/').'/allrecords'; ?>",
         columns: [
             { data: 'id', name: 'id' },
             { data: 'fName', name: 'fName' },
