@@ -1,4 +1,12 @@
-                            
+ @if(session('success'))
+         <div class="alert alert-success alert-dismissable text-center" role="alert">
+          <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+          <span aria-hidden="true">×</span>
+          </button>
+          <h3 class="alert-heading font-size-h4 font-w400">Success</h3>
+          <p class="mb-0">{{ session('success') }}</p>
+        </div>
+    @endif                            
                             
                             <!-- Nav tabs -->
                             <ul class="nav nav-tabs">

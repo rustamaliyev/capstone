@@ -79,24 +79,35 @@ if($row[0] == 'FirstName' || $row[2] == '' || $row[4] == '' || preg_match('/(?:P
                      //SAVE GOOGLE RESULTS INTO VARIABLES       
                              $googleAddr1 = $googleFormattedAddress[0];
                              $googleCity = $googleFormattedAddress[1];
-                             $googleStateZip = explode(" ", $googleFormattedAddress[2]);
-                             $googleState = $googleStateZip[0];
+                            if (isset($googleFormattedAddress[2])) {
+                             $googleStateZip = explode(" ", $googleFormattedAddress[2]);        
+                            }
+                            if (isset($googleStateZip[1])) {
+                             $googleState = $googleStateZip[1];
+                            }else {$googleState = '';}
                             
                             if (isset($googleStateZip[2])) {
                              $googleZip = $googleStateZip[2];
                             }else {$googleZip = '00000';}
                             
                         //CHECK IF RECORD ALREADY EXIST IN THE WORKING TABLE(WE CHECK FOR ADDRESS1 AND LAST NAME)
-                         if (Working::where('addr1', '=', $googleAddr1)->where('lName', '=', $row[1])->count() == 0) {    //CREATE NEW USER
+                         if (Working::where('addr1', '=', $googleAddr1)->where('lName', '=', $row[1])->count() == 0) {    
+                            //CREATE NEW USER HE DOESN'T EXIST YET
+                            
                             $fNameFirstChar = substr(strtolower($row[0]), 0, 1);
-                            $userData = [
-                                'username' => $fNameFirstChar.strtolower($row[1]),
-                                'password' => bcrypt('123456'),
-                                'isAdmin' => 0,
-                            ];
-                                        
+                            $username = $fNameFirstChar.strtolower($row[1]);
+                             
+                             if (User::where('username', '=', $username)->count() == 0) {      
+                                $userData = [
+                                    'username' => $username,
+                                    'password' => bcrypt('123456'),
+                                    'isAdmin' => 0,
+                                ];
+                                $newUser = User::create($userData);  
+                                 }    
                         //SAVE INTO WORKING TABLE
-                            $newUser = User::create($userData);   
+                           
+                           
                             $working = new Working();
                             $working->userID = $newUser->id;
                             $working->stagingID = $staging->id;
@@ -125,8 +136,13 @@ if($row[0] == 'FirstName' || $row[2] == '' || $row[4] == '' || preg_match('/(?:P
                     
             
                 }
+            
+            
             $time = microtime(true) - $_SERVER["REQUEST_TIME_FLOAT"];
-            echo "Process Time: {$time}";    
+            echo "Process Time: {$time}";  
+            
+            return redirect('home')->with('success', 'Success! File has been uploaded!'.'Total Processing Time: '.$time. ' Sorry I am slow there was a lot to process!');
+        
         }
     }
     
