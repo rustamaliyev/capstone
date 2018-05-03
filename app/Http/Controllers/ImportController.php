@@ -104,7 +104,7 @@ if($row[0] == 'FirstName' || $row[2] == '' || $row[4] == '' || preg_match('/(?:P
                             $address = $address_out['street_number'].' '.$address_out['address'];
                          
                         //CHECK IF RECORD DOES NOT EXIST IN THE WORKING TABLE(WE CHECK FOR ADDRESS1 AND LAST NAME)
-                         if (Working::where('addr1', '=', $address)->where('lName', '=', $row[1])->count() == 0) {   
+                         //if (Working::where('addr1', '=', $address)->where('lName', '=', $row[1])->count() == 0) {   
                              
                             
                             //CREATE NEW USER HE DOESN'T EXIST YET
@@ -122,7 +122,7 @@ if($row[0] == 'FirstName' || $row[2] == '' || $row[4] == '' || preg_match('/(?:P
                                     'isAdmin' => 0,
                                 ];
                                 $newUser = User::create($userData);  
-                                 }    
+                                 //}    
                         //SAVE INTO WORKING TABLE
                            
                            
@@ -137,7 +137,15 @@ if($row[0] == 'FirstName' || $row[2] == '' || $row[4] == '' || preg_match('/(?:P
                             }
                             $working->city =  $address_out['city'];
                             $working->state = $address_out['state'];
-                            $working->zip = $address_out['zip'];
+                            
+                            if(is_int($address_out['zip'])) {
+                                $working->zip = $address_out['zip'];
+                                
+                            }else {
+                                $working->zip = '00000';
+                            } 
+                             
+                            
                             $working->listName = $row[7]; 
                             //check if cash donation column exist
                             if (isset($row[8]) && is_numeric($row[8])) {
