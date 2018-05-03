@@ -103,7 +103,7 @@ if($row[0] == 'FirstName' || $row[2] == '' || $row[4] == '' || preg_match('/(?:P
                             //build address1 string
                             $address = $address_out['street_number'].' '.$address_out['address'];
                          
-                        //CHECK IF RECORD ALREADY EXIST IN THE WORKING TABLE(WE CHECK FOR ADDRESS1 AND LAST NAME)
+                        //CHECK IF RECORD DOES NOT EXIST IN THE WORKING TABLE(WE CHECK FOR ADDRESS1 AND LAST NAME)
                          if (Working::where('addr1', '=', $address)->where('lName', '=', $row[1])->count() == 0) {   
                              
                             
