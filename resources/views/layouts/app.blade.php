@@ -153,6 +153,7 @@
         "ajax": " <?php echo url('/').'/allrecords'; ?>",
         columns: [
             { data: 'id', name: 'id' },
+            { data: 'user.username', name: 'username' },
             { data: 'fName', name: 'fName' },
             { data: 'lName', name: 'lName' },
             { data: 'addr1', name: 'addr1' },

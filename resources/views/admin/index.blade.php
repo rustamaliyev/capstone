@@ -57,14 +57,18 @@
                             
                           </div>
                                           
-                    </form>
+                        </form>
                                 </div>
+
                                 <div class="tab-pane fade" id="records">
-                                    <h4>All Records</h4>
+                                <h4>All Records</h4>
+                                    
+                                    
                                 <table width="100%" class="table table-striped table-bordered table-hover" id="working">
                                 <thead>
                                     <tr>
                                         <th id="id">ID</th>
+                                        <th id="username">Username</th>
                                         <th id="fName">First Name</th>
                                         <th id="lName">Last Name</th>
                                         <th id="addr1">Address1</th>
@@ -90,14 +94,17 @@
                                         <td></td>
                                         <td></td>
                                         <td></td>
+                                        <td></td>
                                        
                                       
                                     </tr>
                                 </thead>
                                 <tbody>
-                                    
+                                   
                                 </tbody>
                             </table>
+                                    
+                                     <a href="delete" class="btn btn-sm btn-danger" data-method="delete"  data-token="{{csrf_token()}}" data-confirm="Are you sure?">Delete All Records (Working, Staging and Users)</a> 
                                 </div>
-                           
+                          
                             </div>

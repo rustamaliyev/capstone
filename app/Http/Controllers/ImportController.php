@@ -30,7 +30,7 @@ public function importCSV(Request $request)
                 //$index is the CSV row index
                 $staging = new Staging();  
              
-//SKIP IF FOLLOWING IS TRUE: HEADER ROW, ADDRESS OR CITY COLUMNS ARE EMPTY,ADDRESS1 CONTAINS P.O. BOX                
+//SKIP IF FOLLOWING IS TRUE: IS HEADER ROW, ADDRESS OR CITY COLUMNS ARE EMPTY,ADDRESS1 CONTAINS P.O. BOX                
 if($row[0] == 'FirstName' || $row[2] == '' || $row[4] == '' || preg_match('/(?:P(?:ost(?:al)?)?[\.\-\s]*(?:(?:O(?:ffice)?[\.\-\s]*)?B(?:ox|in|\b|\d)|o(?:ffice|\b)(?:[-\s]*\d)|code)|box[-\s\b]*\d)/i',$row[2]))
 {continue;}                
                 
@@ -66,36 +66,54 @@ if($row[0] == 'FirstName' || $row[2] == '' || $row[4] == '' || preg_match('/(?:P
                     $addressParams = str_replace(" ", "+", $addressParams);
                 
                     //SEND DATA OVER TO GOOGLE API USING CURL
-                    $validateAddress = "https://maps.googleapis.com/maps/api/geocode/json?address=".$addressParams."&sensor=true&key=".$apiKey;        
+                    $validateAddress = "https://maps.googleapis.com/maps/api/geocode/json?address=".$addressParams."&sensor=false&key=".$apiKey;        
                         $ch = curl_init();
                         curl_setopt($ch, CURLOPT_URL, $validateAddress);
                         curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
                         $json = curl_exec($ch);    
                      //DECODE JSON DATA
-                        $validAddress = json_decode($json,true);    
+                        $validAddress = json_decode($json,true);  
+                
+                        $address_out = null;
+                            $parts = array( 
+                              'unit'=>array('subpremise'),    
+                              'street_number'=>array('street_number'),
+                              'address'=>array('route'),    
+                              'city'=>array('locality'), 
+                              'state'=>array('administrative_area_level_1'), 
+                              'zip'=>array('postal_code'), 
+                            ); 
+                           
+                              
+                            
+                            //return $address_out; 
+         
+                
                      //IF ANY RESULT FROM GOOGLE  
-                        if (isset($validAddress['results'][0])) {
-                            $googleFormattedAddress = explode(",", $validAddress['results'][0]['formatted_address']);
-                     //SAVE GOOGLE RESULTS INTO VARIABLES       
-                             $googleAddr1 = $googleFormattedAddress[0];
-                             $googleCity = $googleFormattedAddress[1];
-                            if (isset($googleFormattedAddress[2])) {
-                             $googleStateZip = explode(" ", $googleFormattedAddress[2]);        
-                            }
-                            if (isset($googleStateZip[1])) {
-                             $googleState = $googleStateZip[1];
-                            }else {$googleState = '';}
+                        if (!empty($validAddress['results'][0]['address_components'])) {                             
+                            //get all address components from the api and store them a new array
+                           $ac = $validAddress['results'][0]['address_components']; 
+                              foreach($parts as $need=>&$types) { 
+                                foreach($ac as &$a) { 
+                                  if (in_array($a['types'][0],$types)) $address_out[$need] = $a['short_name']; 
+                                  elseif (empty($address_out[$need])) $address_out[$need] = ''; 
+                                } 
+                              }  
                             
-                            if (isset($googleStateZip[2])) {
-                             $googleZip = $googleStateZip[2];
-                            }else {$googleZip = '00000';}
-                            
+                            //build address1 string
+                            $address = $address_out['street_number'].' '.$address_out['address'];
+                         
                         //CHECK IF RECORD ALREADY EXIST IN THE WORKING TABLE(WE CHECK FOR ADDRESS1 AND LAST NAME)
-                         if (Working::where('addr1', '=', $googleAddr1)->where('lName', '=', $row[1])->count() == 0) {    
+                         if (Working::where('addr1', '=', $address)->where('lName', '=', $row[1])->count() == 0) {   
+                             
+                            
                             //CREATE NEW USER HE DOESN'T EXIST YET
                             
                             $fNameFirstChar = substr(strtolower($row[0]), 0, 1);
-                            $username = $fNameFirstChar.strtolower($row[1]);
+                            //construct username based on first initial, last name and zip code 
+                            $username = $fNameFirstChar.strtolower($row[1]).$address_out['zip'];
+                            //clean up username from illegal chars
+                            $username = str_replace(['-', '.', ' '], "", $username); 
                              
                              if (User::where('username', '=', $username)->count() == 0) {      
                                 $userData = [
@@ -113,10 +131,13 @@ if($row[0] == 'FirstName' || $row[2] == '' || $row[4] == '' || preg_match('/(?:P
                             $working->stagingID = $staging->id;
                             $working->fName = $row[0];
                             $working->lName = $row[1];
-                            $working->addr1 = $googleAddr1;
-                            $working->city =  $googleCity;
-                            $working->state = $googleState;
-                            $working->zip = $googleZip;
+                            $working->addr1 = $address;
+                            if($address_out['unit'] !=='') {
+                            $working->addr2 ='# '.$address_out['unit'];
+                            }
+                            $working->city =  $address_out['city'];
+                            $working->state = $address_out['state'];
+                            $working->zip = $address_out['zip'];
                             $working->listName = $row[7]; 
                             //check if cash donation column exist
                             if (isset($row[8]) && is_numeric($row[8])) {
@@ -131,9 +152,6 @@ if($row[0] == 'FirstName' || $row[2] == '' || $row[4] == '' || preg_match('/(?:P
                             }    
                            
                         }     
-                
-                        
-                    
             
                 }
             
@@ -141,7 +159,7 @@ if($row[0] == 'FirstName' || $row[2] == '' || $row[4] == '' || preg_match('/(?:P
             $time = microtime(true) - $_SERVER["REQUEST_TIME_FLOAT"];
             echo "Process Time: {$time}";  
             
-            return redirect('home')->with('success', 'Success! File has been uploaded!'.'Total Processing Time: '.$time. ' Sorry I am slow there was a lot to process!');
+           // return redirect('home')->with('success', 'Success! File has been uploaded!'.'Total Processing Time: '.$time. ' Sorry I am slow there was a lot to process!');
         
         }
     }
@@ -149,8 +167,21 @@ if($row[0] == 'FirstName' || $row[2] == '' || $row[4] == '' || preg_match('/(?:P
     public function getAllRecords()
     {
         
-        $working = Working::all();
+        //$working = Working::all();
+        $working = Working::with('user')->get();
         echo '{ "data":'.$working->toJson().'}';
+
+
+    }
+    
+    public function deleteAllRecords()
+    {
+        
+        \App\Working::query()->delete();
+        \App\Staging::query()->delete();
+        \App\User::query()->where('isAdmin',0)->delete();
+       
+        return redirect('home')->with('success', 'Success! Deleted all records!');
 
 
     }
