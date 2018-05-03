@@ -159,7 +159,7 @@ if($row[0] == 'FirstName' || $row[2] == '' || $row[4] == '' || preg_match('/(?:P
             $time = microtime(true) - $_SERVER["REQUEST_TIME_FLOAT"];
             echo "Process Time: {$time}";  
             
-           // return redirect('home')->with('success', 'Success! File has been uploaded!'.'Total Processing Time: '.$time. ' Sorry I am slow there was a lot to process!');
+            return redirect('home')->with('success', 'Success! File has been uploaded!'.'Total Processing Time: '.$time. ' Sorry I am slow there was a lot to process!');
         
         }
     }
