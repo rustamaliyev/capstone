@@ -10,6 +10,83 @@ use League\Csv\Reader;
 use League\Csv\Statement;
 class ImportController extends Controller
 {
+    
+public function importCSV2(Request $request){
+ 
+$apiKey = 'AIzaSyCPt110uwWaetZfoerFQmzy4iWk2230frY';
+  
+
+        //check if file is not empty
+        if ($request->hasFile('csvFile')) {
+            
+             //process the file
+            $file = $request->csvFile;
+            $reader = Reader::createFromPath($file, 'r');
+                            
+            
+            foreach ($reader as $index => $row) {
+                //STEP ONE save raw data into staging table to maintina data integrity                        
+                //$row is an array where each item represent a CSV data cell
+                //$index is the CSV row index
+                      $addressParams = $row[2].$row[3].$row[4].$row[5].$row[6];
+                    //$addressParams = str_replace(" ", "+", $addressParams);
+                
+                    //SEND DATA OVER TO GOOGLE API USING CURL
+                    $validateAddress = "https://maps.googleapis.com/maps/api/geocode/json?address=".$addressParams."&sensor=false&key=".$apiKey;        
+                     /*    
+                        $ch = curl_init();
+                        curl_setopt($ch, CURLOPT_URL, $validateAddress);
+                        curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
+                        $json = curl_exec($ch);    
+                        //DECODE JSON DATA
+                     
+                        $validAddress = json_decode($json,true);  
+                */
+                
+               $lines_array=file($validateAddress);
+                    // turn array into one variable
+                    $lines_string=implode(' ',$lines_array);
+                    //output, you can also save it locally on the server
+                     echo $lines_string;
+                   //echo $lines_string['results'][0];
+                        $address_out = null;
+                            $parts = array( 
+                              'unit'=>array('subpremise'),    
+                              'street_number'=>array('street_number'),
+                              'address'=>array('route'),    
+                              'city'=>array('locality'), 
+                              'state'=>array('administrative_area_level_1'), 
+                              'zip'=>array('postal_code'), 
+                            ); 
+
+                if (!empty($lines_string['results'][0]['address_components'])) {                             
+                            //get all address components from the api and store them a new array
+                           $ac = $lines_string['results'][0]['address_components']; 
+                              foreach($parts as $need=>&$types) { 
+                                foreach($ac as &$a) { 
+                                  if (in_array($a['types'][0],$types)) $address_out[$need] = $a['short_name']; 
+                                  elseif (empty($address_out[$need])) $address_out[$need] = ''; 
+                                } 
+                              }  
+                    }
+                            //build address1 string
+                       echo  $address = $address_out['street_number'].' '.$address_out['address'];
+                       
+                
+                }
+            
+          
+        }
+        
+    
+    
+    
+    $time = microtime(true) - $_SERVER["REQUEST_TIME_FLOAT"]; echo "Process Time: {$time}";  
+                
+    
+}
+    
+    
 public function importCSV(Request $request)
     {
     

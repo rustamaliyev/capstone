@@ -8,6 +8,7 @@ class Working extends Model
 {
 
     public $table = "working";
+    
     public function user() {
 
         return $this->belongsTo(User::class,'userID');
