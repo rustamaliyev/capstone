@@ -25,7 +25,7 @@ Route::get('/allrecords', 'ImportController@getAllRecords')->name('all');
 Route::get('edit/{id}', 'UserController@edit');
 Route::post('edit/{id}','UserController@update');    
 //import csv    
-Route::post('import', 'ImportController@importCSV2');    
+Route::post('import', 'ImportController@importCSV');    
 Route::get('delete', 'ImportController@deleteAllRecords');    
 });
 

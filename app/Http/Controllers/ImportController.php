@@ -23,32 +23,31 @@ $apiKey = 'AIzaSyCPt110uwWaetZfoerFQmzy4iWk2230frY';
             $file = $request->csvFile;
             $reader = Reader::createFromPath($file, 'r');
                             
-            
+            $size =  sizeof($reader);
             foreach ($reader as $index => $row) {
+                
+               //echo  $addressParams = $row[2].$row[3].$row[4].$row[5].$row[6];
+                echo $row[2].'--'.$index.'<br>';
+                
+                
+               /*
                 //STEP ONE save raw data into staging table to maintina data integrity                        
                 //$row is an array where each item represent a CSV data cell
                 //$index is the CSV row index
-                      $addressParams = $row[2].$row[3].$row[4].$row[5].$row[6];
+                     echo  $addressParams = $row[2].$row[3].$row[4].$row[5].$row[6];
                     //$addressParams = str_replace(" ", "+", $addressParams);
                 
                     //SEND DATA OVER TO GOOGLE API USING CURL
                     $validateAddress = "https://maps.googleapis.com/maps/api/geocode/json?address=".$addressParams."&sensor=false&key=".$apiKey;        
-                     /*    
+                   
                         $ch = curl_init();
                         curl_setopt($ch, CURLOPT_URL, $validateAddress);
                         curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
-                        $json = curl_exec($ch);    
+                        $json = curl_exec($ch);      
                         //DECODE JSON DATA
                      
                         $validAddress = json_decode($json,true);  
-                */
-                
-               $lines_array=file($validateAddress);
-                    // turn array into one variable
-                    $lines_string=implode(' ',$lines_array);
-                    //output, you can also save it locally on the server
-                     echo $lines_string;
-                   //echo $lines_string['results'][0];
+
                         $address_out = null;
                             $parts = array( 
                               'unit'=>array('subpremise'),    
@@ -59,19 +58,21 @@ $apiKey = 'AIzaSyCPt110uwWaetZfoerFQmzy4iWk2230frY';
                               'zip'=>array('postal_code'), 
                             ); 
 
-                if (!empty($lines_string['results'][0]['address_components'])) {                             
-                            //get all address components from the api and store them a new array
-                           $ac = $lines_string['results'][0]['address_components']; 
-                              foreach($parts as $need=>&$types) { 
-                                foreach($ac as &$a) { 
-                                  if (in_array($a['types'][0],$types)) $address_out[$need] = $a['short_name']; 
-                                  elseif (empty($address_out[$need])) $address_out[$need] = ''; 
-                                } 
-                              }  
-                    }
+                            if (!empty($validAddress['results'][0]['address_components'])) {           
+
+
+                                        //get all address components from the api and store them a new array
+                                       $ac = $validAddress['results'][0]['address_components']; 
+                                          foreach($parts as $need=>&$types) { 
+                                            foreach($ac as &$a) { 
+                                              if (in_array($a['types'][0],$types)) $address_out[$need] = $a['short_name']; 
+                                              elseif (empty($address_out[$need])) $address_out[$need] = ''; 
+                                            } 
+                                          }  
+                                }
                             //build address1 string
-                       echo  $address = $address_out['street_number'].' '.$address_out['address'];
-                       
+                            echo  $address = $address_out['street_number'].' '.$address_out['address'];
+               */        
                 
                 }
             
@@ -89,9 +90,10 @@ $apiKey = 'AIzaSyCPt110uwWaetZfoerFQmzy4iWk2230frY';
     
 public function importCSV(Request $request)
     {
+    echo 'Started File Processing';
     
         $apiKey = 'AIzaSyCPt110uwWaetZfoerFQmzy4iWk2230frY';
-        sleep(1);
+        //sleep(1);
     
   
         //check if file is not empty
@@ -135,6 +137,7 @@ if($row[0] == 'FirstName' || $row[2] == '' || $row[4] == '' || preg_match('/(?:P
                     
                     //SAVE TO STAGING TABLE
                     $staging->save();
+                   
                 
                     //STEP TWO CHECK THE ADDRESS VALIDITY VIA GOOGLE GEOCODING API
                     //DATA CLEANUP TO GET CORRECT RESULTS FROM GOOGLE
@@ -241,13 +244,21 @@ if($row[0] == 'FirstName' || $row[2] == '' || $row[4] == '' || preg_match('/(?:P
                 }
             
             
-            $time = microtime(true) - $_SERVER["REQUEST_TIME_FLOAT"];
-            echo "Process Time: {$time}";  
             
-            return redirect('home')->with('success', 'Success! File has been uploaded!'.'Total Processing Time: '.$time. ' Sorry I am slow there was a lot to process!');
+            
+            
+            $time = microtime(true) - $_SERVER["REQUEST_TIME_FLOAT"];
+            echo "Completed! Process Time: {$time}";  
+            
+            //return redirect('home')->with('success', 'Success! File has been uploaded!'.'Total Processing Time: '.$time. ' Sorry I am slow there was a lot to process!');
         
         }
     }
+    
+  
+    
+    
+    
     
     public function getAllRecords()
     {

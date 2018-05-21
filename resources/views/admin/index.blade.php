@@ -21,7 +21,8 @@
                             <div class="tab-content">
                                 <div class="tab-pane fade active in" id="home-pills">
                                     <h4>Upload Files</h4>
-                                      <form method="post" id="importForm" action="import" enctype="multipart/form-data">
+                                      <!--<form method="post" id="importForm" action="import" enctype="multipart/form-data">-->
+                                      <form id="importForm" method="post" enctype="multipart/form-data">       
                         {{ csrf_field() }}
                         <div class="row">
                             <div class="col-xl-12">
@@ -108,3 +109,5 @@
                                 </div>
                           
                             </div>
+
+

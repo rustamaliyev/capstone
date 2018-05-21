@@ -46,8 +46,8 @@
 <body>
     
 
-   <div id="wrapper">
-
+<div id="wrapper">
+<div id="status"></div>
         <!-- Navigation -->
         <nav class="navbar navbar-default navbar-static-top" role="navigation" style="margin-bottom: 0">
             <div class="navbar-header">
@@ -141,7 +141,7 @@
     });*/
 
     $(document).ready(function() {
-    $('#working').DataTable( {
+    var table = $('#working').DataTable( {
         "draw": 1,
         "recordsTotal": 2,
         "recordsFiltered": 2,
@@ -150,7 +150,7 @@
         "lengthMenu": [10, 25, 50, 75, 100],
         "processing": true,
         "serverSide": false,
-        "ajax": " <?php echo url('/').'/allrecords'; ?>",
+        "ajax": "<?php echo url('/').'/allrecords'; ?>",
         columns: [
             { data: 'id', name: 'id' },
             { data: 'user.username', name: 'username' },
@@ -168,11 +168,47 @@
         
         ]
         } );
+        
+     //refresh table every 10 seconds
+        setInterval( function () {
+            table.ajax.reload(null, false);
+        }, 10000 );    
+
     } );    
         
         
     </script>
     
+    <script>  
+      $(document).ready(function(){  
+           $('#importForm').on("submit", function(e){  
+                $('#status').html('Processing...');  
+                e.preventDefault(); //form will not submitted  
+                $.ajax({  
+                     url:"<?php echo url('/').'/import'; ?>",  
+                     method:"POST",  
+                     data:new FormData(this),  
+                     contentType:false,          // The content type used when sending data to the server.  
+                     cache:false,                // To unable request pages to be cached  
+                     processData:false,          // To send DOMDocument or non processed data file it is set to false  
+                     success: function(data){  
+                          if(data=='Error1')  
+                          {  
+                               alert("Invalid File");  
+                          }  
+                          else if(data == "Error2")  
+                          {  
+                               alert("Please Select File");  
+                          }  
+                          else  
+                          {  
+                               $('#status').html(data);  
+                          }  
+                     }  
+                })  
+           });  
+      });  
+ </script>  
     
 </body>
 </html>
