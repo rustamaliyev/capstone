@@ -98,7 +98,10 @@
                 <div class="row">
                     <div class="col-lg-12">
                         <h1 class="page-header">Dashboard</h1>
-                       
+                        <div class="progress-bar"></div>
+                        <div class="loading-progress"></div>
+                        
+                        
                         @yield('content')
                         
                     </div>
@@ -132,6 +135,10 @@
     <script src="{{ asset('vendor/datatables/js/jquery.dataTables.min.js') }}"></script>
     <script src="{{ asset('vendor/datatables-plugins/dataTables.bootstrap.min.js') }}"></script>
     <script src="{{ asset('vendor/datatables-responsive/dataTables.responsive.js') }}"></script>
+    
+    <script src="{{ asset('js/jquery.progressTimer.js') }}"></script>
+    
+    
     <script>
         /*
     $(document).ready(function() {
@@ -182,12 +189,26 @@
     <script>  
       $(document).ready(function(){  
            $('#importForm').on("submit", function(e){  
-                $('#status').html('Processing...');  
+                $('#status').html('Processing...'); 
+                var start = new Date().getTime();
+               
+                //https://www.jqueryscript.net/loading/Ajax-Progress-Bar-Plugin-with-jQuery-Bootstrap-progressTimer.html
+                var progress = $(".loading-progress").progressTimer({
+                  timeLimit: 10,
+                  onFinish: function () {
+                  
+                }
+                });
+
                 e.preventDefault(); //form will not submitted  
-                $.ajax({  
+                $.ajax({
+                    
+
+                     async: true,
                      url:"<?php echo url('/').'/import'; ?>",  
                      method:"POST",  
                      data:new FormData(this),  
+                        
                      contentType:false,          // The content type used when sending data to the server.  
                      cache:false,                // To unable request pages to be cached  
                      processData:false,          // To send DOMDocument or non processed data file it is set to false  
@@ -201,10 +222,34 @@
                                alert("Please Select File");  
                           }  
                           else  
-                          {  
+                          {    
                                $('#status').html(data);  
                           }  
-                     }  
+                     } ,
+                    
+                    
+                     xhr: function(){
+                           var xhr = new window.XMLHttpRequest();
+                             // Handle progress
+                             //Upload progress
+                           xhr.upload.addEventListener("progress", function(evt){
+                               if (evt.lengthComputable) {
+                                  var percentComplete = evt.loaded / evt.total;
+                                  //Do something with upload progress
+                                  console.log(percentComplete+"% completed");   
+                               }
+                           }, false);
+                          
+
+                           return xhr;
+                        },
+                        complete:function(){
+                            console.log("Request finished.");
+                        },
+                    
+                    
+                    
+                    
                 })  
            });  
       });  
