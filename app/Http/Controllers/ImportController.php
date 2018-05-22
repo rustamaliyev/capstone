@@ -50,7 +50,13 @@ public function importCSV(Request $request)
         $apiKey = 'AIzaSyCPt110uwWaetZfoerFQmzy4iWk2230frY';
         //sleep(1);
     
-  
+  $startTime = time(); 
+//your code or 
+sleep(1); 
+$endTime = time() - $startTime; 
+header('Content-Length: '.strlen($endTime));
+$response['success'] = true;
+
         //check if file is not empty
         if ($request->hasFile('csvFile')) {
             

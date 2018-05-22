@@ -100,7 +100,10 @@
                         <h1 class="page-header">Dashboard</h1>
                         <div class="progress-bar"></div>
                         <div class="loading-progress"></div>
-                        
+                        <div class="progress">
+                            <div id="bulk-action-progbar" class="progress-bar progress-bar-striped active" role="progressbar" aria-valuenow="1" aria-valuemin="0" aria-valuemax="100" style="width:1%">                 
+                            </div>
+                        </div>
                         
                         @yield('content')
                         
@@ -201,12 +204,47 @@
                 });
 
                 e.preventDefault(); //form will not submitted  
+               
+                var percentComplete = 1;
                 $.ajax({
-                    
+                    xhr: function(){
+                  var xhr = new window.XMLHttpRequest();
+                  //Upload progress, request sending to server
+                  xhr.upload.addEventListener("progress", function(evt){
+                      
+                   if (e.lengthComputable) {
+                      //percentComplete = (e.loaded / e.total) * 100;
+                      percentComplete = parseInt( (e.loaded / e.total * 100), 10);
+                      console.log(percentComplete);
+                      $('#bulk-action-progbar').data("aria-valuenow",percentComplete);
+                      $('#bulk-action-progbar').css("width",percentComplete+'%');
 
+                    }      
+                      
+                      
+                    console.log("in Upload progress");
+                    console.log("Upload Done");
+                  }, false);
+                  //Download progress, waiting for response from server
+                  xhr.addEventListener("progress", function(e){
+                    console.log("in Download progress");
+                    if (e.lengthComputable) {
+                      //percentComplete = (e.loaded / e.total) * 100;
+                      percentComplete = parseInt( (e.loaded / e.total * 100), 10);
+                      console.log(percentComplete);
+                      $('#bulk-action-progbar').data("aria-valuenow",percentComplete);
+                      $('#bulk-action-progbar').css("width",percentComplete+'%');
+
+                    }
+                    else{
+                         console.log("Length not computable.");
+                    }
+                  }, false);
+                  return xhr;
+            },
                      async: true,
                      url:"<?php echo url('/').'/import'; ?>",  
-                     method:"POST",  
+                     type:"POST",  
                      data:new FormData(this),  
                         
                      contentType:false,          // The content type used when sending data to the server.  
@@ -228,21 +266,6 @@
                      } ,
                     
                     
-                     xhr: function(){
-                           var xhr = new window.XMLHttpRequest();
-                             // Handle progress
-                             //Upload progress
-                           xhr.upload.addEventListener("progress", function(evt){
-                               if (evt.lengthComputable) {
-                                  var percentComplete = evt.loaded / evt.total;
-                                  //Do something with upload progress
-                                  console.log(percentComplete+"% completed");   
-                               }
-                           }, false);
-                          
-
-                           return xhr;
-                        },
                         complete:function(){
                             console.log("Request finished.");
                         },
