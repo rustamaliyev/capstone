@@ -214,6 +214,12 @@
                       
                    if (e.lengthComputable) {
                       //percentComplete = (e.loaded / e.total) * 100;
+                       
+                     alert(e.lengthComputable); 
+                      alert(e.loaded);
+                      alert(e.total);       
+                       
+                       
                       percentComplete = parseInt( (e.loaded / e.total * 100), 10);
                       console.log(percentComplete);
                       $('#bulk-action-progbar').data("aria-valuenow",percentComplete);
@@ -222,16 +228,17 @@
                     }      
                       
                       
-                    console.log("in Upload progress");
-                    console.log("Upload Done");
+                    console.log("Uploading File...");
+                    console.log("File Uploaded");
                   }, false);
                   //Download progress, waiting for response from server
                   xhr.addEventListener("progress", function(e){
-                    console.log("in Download progress");
+                    console.log("Processing the file...");
                     if (e.lengthComputable) {
                       //percentComplete = (e.loaded / e.total) * 100;
                       percentComplete = parseInt( (e.loaded / e.total * 100), 10);
                       console.log(percentComplete);
+                      
                       $('#bulk-action-progbar').data("aria-valuenow",percentComplete);
                       $('#bulk-action-progbar').css("width",percentComplete+'%');
 
@@ -267,7 +274,7 @@
                     
                     
                         complete:function(){
-                            console.log("Request finished.");
+                            console.log("File processed.");
                         },
                     
                     
