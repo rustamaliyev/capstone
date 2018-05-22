@@ -50,21 +50,25 @@ public function importCSV(Request $request)
         $apiKey = 'AIzaSyCPt110uwWaetZfoerFQmzy4iWk2230frY';
         //sleep(1);
     
-  $startTime = time(); 
-//your code or 
-sleep(1); 
-$endTime = time() - $startTime; 
-header('Content-Length: '.strlen($endTime));
-$response['success'] = true;
-
+ 
         //check if file is not empty
         if ($request->hasFile('csvFile')) {
             
               
             //process the file
             $file = $request->csvFile;
-            $reader = Reader::createFromPath($file, 'r');         
+            $reader = Reader::createFromPath($file, 'r');   
+            
+            
+            
+           
+            
+   
             foreach ($reader as $index => $row) {
+                
+    
+                
+                
                 //STEP ONE save raw data into staging table to maintina data integrity                        
                 //$row is an array where each item represent a CSV data cell
                 //$index is the CSV row index
@@ -104,17 +108,16 @@ $response['success'] = true;
                             //SAVE TO STAGING TABLE
                             $staging->save();
 
-                    } catch (QueryException $e) {
-                        echo 'Caught exception: ',  $e->getMessage(), "\n";
-                        continue;
+                            } catch (QueryException $e) {
+                                echo 'Caught exception: ',  $e->getMessage(), "\n";
+                                continue;
 
-                    } catch (PDOException $e) {
-                         echo 'Caught exception: ',  $e->getMessage(), "\n";
-                        continue;
-                    }      
+                            } catch (PDOException $e) {
+                                 echo 'Caught exception: ',  $e->getMessage(), "\n";
+                                continue;
+                            }      
                 
-                
-                
+              
                     //STEP TWO CHECK THE ADDRESS VALIDITY VIA GOOGLE GEOCODING API
                     //DATA CLEANUP TO GET CORRECT RESULTS FROM GOOGLE
                     $addr1 = str_replace("#", "apt", $row[2]); 

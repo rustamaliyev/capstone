@@ -47,7 +47,7 @@
     
 
 <div id="wrapper">
-<div id="status"></div>
+
         <!-- Navigation -->
         <nav class="navbar navbar-default navbar-static-top" role="navigation" style="margin-bottom: 0">
             <div class="navbar-header">
@@ -62,7 +62,14 @@
             <!-- /.navbar-header -->
 
             <ul class="nav navbar-top-links navbar-right">
+                <li>@if (session('status'))
+                        <div class="alert alert-success">
+                            {{ session('status') }}
+                        </div>
+                    @endif
 
+                    You are logged in!
+                </li>
                 <li class="dropdown">
                     <a class="dropdown-toggle" data-toggle="dropdown" href="#">
                         <i class="fa fa-user fa-fw"></i> <i class="fa fa-caret-down"></i>
@@ -86,6 +93,8 @@
                     <!-- /.dropdown-user -->
                 </li>
                 <!-- /.dropdown -->
+                
+                  
             </ul>
             <!-- /.navbar-top-links -->
 
@@ -104,7 +113,8 @@
                             <div id="bulk-action-progbar" class="progress-bar progress-bar-striped active" role="progressbar" aria-valuenow="1" aria-valuemin="0" aria-valuemax="100" style="width:1%">                 
                             </div>
                         </div>
-                        
+                       
+                        <div class="alert alert-info" role="alert" id="status"></div>
                         @yield('content')
                         
                     </div>
@@ -207,53 +217,11 @@
                
                 var percentComplete = 1;
                 $.ajax({
-                    xhr: function(){
-                  var xhr = new window.XMLHttpRequest();
-                  //Upload progress, request sending to server
-                  xhr.upload.addEventListener("progress", function(evt){
-                      
-                   if (e.lengthComputable) {
-                      //percentComplete = (e.loaded / e.total) * 100;
-                       
-                     alert(e.lengthComputable); 
-                      alert(e.loaded);
-                      alert(e.total);       
-                       
-                       
-                      percentComplete = parseInt( (e.loaded / e.total * 100), 10);
-                      console.log(percentComplete);
-                      $('#bulk-action-progbar').data("aria-valuenow",percentComplete);
-                      $('#bulk-action-progbar').css("width",percentComplete+'%');
-
-                    }      
-                      
-                      
-                    console.log("Uploading File...");
-                    console.log("File Uploaded");
-                  }, false);
-                  //Download progress, waiting for response from server
-                  xhr.addEventListener("progress", function(e){
-                    console.log("Processing the file...");
-                    if (e.lengthComputable) {
-                      //percentComplete = (e.loaded / e.total) * 100;
-                      percentComplete = parseInt( (e.loaded / e.total * 100), 10);
-                      console.log(percentComplete);
-                      
-                      $('#bulk-action-progbar').data("aria-valuenow",percentComplete);
-                      $('#bulk-action-progbar').css("width",percentComplete+'%');
-
-                    }
-                    else{
-                         console.log("Length not computable.");
-                    }
-                  }, false);
-                  return xhr;
-            },
-                     async: true,
+                    
+                    async: true,
                      url:"<?php echo url('/').'/import'; ?>",  
                      type:"POST",  
                      data:new FormData(this),  
-                        
                      contentType:false,          // The content type used when sending data to the server.  
                      cache:false,                // To unable request pages to be cached  
                      processData:false,          // To send DOMDocument or non processed data file it is set to false  
@@ -270,11 +238,56 @@
                           {    
                                $('#status').html(data);  
                           }  
-                     } ,
+                     } ,    
+                    
+                    
+                 xhr: function(){
+                  var xhr = new window.XMLHttpRequest();
+                  //Upload progress, request sending to server
+                  xhr.upload.addEventListener("progress", function(e){
+                   
+                   if (e.lengthComputable) {
+       
+                       alert(e.loaded);
+                      percentComplete = parseInt( (e.loaded / e.total * 100), 10);
+                      console.log(percentComplete);
+                      $('#bulk-action-progbar').data("aria-valuenow",percentComplete);
+                      $('#bulk-action-progbar').css("width",percentComplete+'%');
+
+                    }      
+                      
+                    $('#status').html('Uploading File...');   
+                    $('#status').html('File Uploaded');
+               
+                   
+                  }, false);
+                  //Download progress, waiting for response from server
+                  xhr.addEventListener("progress", function(e){
+                      
+                  
+                    $('#status').html('Processing the file...'); 
+                      
+                    if (e.lengthComputable) {
+                        
+                            
+                      //percentComplete = (e.loaded / e.total) * 100;
+                      percentComplete = parseInt( (e.loaded / e.total * 100), 10);
+   
+                      $('#bulk-action-progbar').data("aria-valuenow",percentComplete);
+                      $('#bulk-action-progbar').css("width",percentComplete+'%');
+
+                    }
+                      
+                  
+                   
+                  }, false);
+                  return xhr;
+            },
+                     
                     
                     
                         complete:function(){
-                            console.log("File processed.");
+                            $('#status').html('File Processed.');   
                         },
                     
                     
