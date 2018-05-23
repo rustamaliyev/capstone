@@ -142,10 +142,11 @@ public function importCSV(Request $request)
                               
                             
                             //return $address_out; 
-         
+        
                 
                      //IF ANY RESULT FROM GOOGLE  
-                        if (!empty($validAddress['results'][0]['address_components'])) {                             
+                        if (!empty($validAddress['results'][0]['address_components'])) {            
+                            
                             //get all address components from the api and store them a new array
                            $ac = $validAddress['results'][0]['address_components']; 
                               foreach($parts as $need=>&$types) { 
@@ -157,63 +158,81 @@ public function importCSV(Request $request)
                             
                             //build address1 string
                             $address = $address_out['street_number'].' '.$address_out['address'];
-                         
+                            $fullRecord = $row[0].' '.$row[1].' '.$address.' '.$address_out['unit'].' '.$address_out['city'].' '.$address_out['state'].' '.$address_out['zip'];
                         //CHECK IF RECORD DOES NOT EXIST IN THE WORKING TABLE(WE CHECK FOR ADDRESS1 AND LAST NAME)
                          //if (Working::where('addr1', '=', $address)->where('lName', '=', $row[1])->count() == 0) {   
+                            //select all records from working table    
+                            $working = \App\Working::all();
+                            
                              
+                                //Levenshtein edit distance - loop thru working table records to find a match 
+                                foreach ($working as $working) {
+                                $fullRecordDB = $working->fName.' '.$working->lName.' '.$working->addr1.' '.$working->addr2.' '.$working->city.' '.$working->state.' '.$working->zip;
+                                  //echo levenshtein($fullRecord,$fullRecordDB).'|'.$fullRecord.'--'.$fullRecordDB.'<br>';
+                                    //get the match score between csv row and already existing rows in the database
+                                    $matchScore = levenshtein($fullRecord,$fullRecordDB);
+                                        
+                                       // echo '[ '.$matchScore.']'; exit;
+                                    
+                                        if ($matchScore < 10) {
+                                         
+                                    
+                                            }else {
+                                            
+                                                    //CREATE NEW USER HE DOESN'T EXIST YET
+
+                                                    $fNameFirstChar = substr(strtolower($row[0]), 0, 1);
+                                                    //construct username based on first initial, last name and zip code 
+                                                    $username = $fNameFirstChar.strtolower($row[1]).$address_out['zip'];
+                                                    //clean up username from illegal chars
+                                                    $username = str_replace(['-', '.', ' '], "", $username); 
+
+                                                     if (User::where('username', '=', $username)->count() == 0) {      
+                                                        $userData = [
+                                                            'username' => $username,
+                                                            'password' => bcrypt('123456'),
+                                                            'isAdmin' => 0,
+                                                        ];
+                                                        $newUser = User::create($userData);  
+                                                         //}    
+                                                    //SAVE INTO WORKING TABLE
+
+                                                        $working = new Working();
+                                                        $working->userID = $newUser->id;
+                                                        $working->stagingID = $staging->id;
+                                                        $working->fName = $row[0];
+                                                        $working->lName = $row[1];
+                                                        $working->addr1 = $address;
+                                                        if($address_out['unit'] !=='') {
+                                                        $working->addr2 ='# '.$address_out['unit'];
+                                                        }
+                                                        $working->city =  $address_out['city'];
+                                                        $working->state = $address_out['state'];
+
+                                                        if(is_int($address_out['zip'])) {
+                                                            $working->zip = $address_out['zip'];
+
+                                                        }else {
+                                                            $working->zip = '00000';
+                                                        } 
+
+
+                                                        $working->listName = $row[7]; 
+                                                        //check if cash donation column exist
+                                                        if (isset($row[8]) && is_numeric($row[8])) {
+                                                         $working->cashDonation = $row[8];
+                                                        } 
+                                                        //check if previous attendee column exist
+                                                        if (isset($row[9])) {
+                                                         $working->previousAttendee = $row[9];
+                                                        } 
+                                                        $working->save();
+                                                    
+                                                }
+
+                                        }    
+                                }
                             
-                            //CREATE NEW USER HE DOESN'T EXIST YET
-                            
-                            $fNameFirstChar = substr(strtolower($row[0]), 0, 1);
-                            //construct username based on first initial, last name and zip code 
-                            $username = $fNameFirstChar.strtolower($row[1]).$address_out['zip'];
-                            //clean up username from illegal chars
-                            $username = str_replace(['-', '.', ' '], "", $username); 
-                             
-                             if (User::where('username', '=', $username)->count() == 0) {      
-                                $userData = [
-                                    'username' => $username,
-                                    'password' => bcrypt('123456'),
-                                    'isAdmin' => 0,
-                                ];
-                                $newUser = User::create($userData);  
-                                 //}    
-                        //SAVE INTO WORKING TABLE
-                           
-                           
-                            $working = new Working();
-                            $working->userID = $newUser->id;
-                            $working->stagingID = $staging->id;
-                            $working->fName = $row[0];
-                            $working->lName = $row[1];
-                            $working->addr1 = $address;
-                            if($address_out['unit'] !=='') {
-                            $working->addr2 ='# '.$address_out['unit'];
-                            }
-                            $working->city =  $address_out['city'];
-                            $working->state = $address_out['state'];
-                            
-                            if(is_int($address_out['zip'])) {
-                                $working->zip = $address_out['zip'];
-                                
-                            }else {
-                                $working->zip = '00000';
-                            } 
-                             
-                            
-                            $working->listName = $row[7]; 
-                            //check if cash donation column exist
-                            if (isset($row[8]) && is_numeric($row[8])) {
-                             $working->cashDonation = $row[8];
-                            } 
-                            //check if previous attendee column exist
-                            if (isset($row[9])) {
-                             $working->previousAttendee = $row[9];
-                            } 
-                            $working->save();
-                            
-                            }    
-                           
                         }     
             
                 }
