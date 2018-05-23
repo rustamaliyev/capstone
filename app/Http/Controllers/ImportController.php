@@ -162,25 +162,10 @@ public function importCSV(Request $request)
                         //CHECK IF RECORD DOES NOT EXIST IN THE WORKING TABLE(WE CHECK FOR ADDRESS1 AND LAST NAME)
                          //if (Working::where('addr1', '=', $address)->where('lName', '=', $row[1])->count() == 0) {   
                             //select all records from working table    
-                            $working = \App\Working::all();
+                            
                             
         
-                                //Levenshtein edit distance - loop thru working table records to find a match 
-                                foreach ($working as $working) {
-                                    
-                                  
-                                    
-                                $fullRecordDB = $working->fName.' '.$working->lName.' '.$working->addr1.' '.$working->addr2.' '.$working->city.' '.$working->state.' '.$working->zip;
-                                   
-                                    //get the match score between csv row and already existing rows in the database
-                                    $matchScore = levenshtein($fullRecord,$fullRecordDB);
-                                        
-                                       // echo '[ '.$matchScore.']'; exit;
-                                    
-                                        if ($matchScore < 25) {
-                                           // echo '<b style="color:red">MATCH SCORE: '.levenshtein($fullRecord,$fullRecordDB).'|'.$fullRecord.'--'.$fullRecordDB.'</b><br>';
-                                             continue;
-                                            }else {
+                               
                                             
                                                 // echo 'NO MATCH SCORE: '.levenshtein($fullRecord,$fullRecordDB).'|'.$fullRecord.'--'.$fullRecordDB.'<br>';
                                             
@@ -231,7 +216,26 @@ public function importCSV(Request $request)
                                                         if (isset($row[9])) {
                                                          $working->previousAttendee = $row[9];
                                                         } 
-                                                        $working->save();
+                                                         
+                                                     $working = \App\Working::all();    
+                                                     //Levenshtein edit distance - loop thru working table records to find a match 
+                                                    foreach ($working as $working) {
+
+
+                                            $fullRecordDB = $working->fName.' '.$working->lName.' '.$working->addr1.' '.$working->addr2.' '.$working->city.' '.$working->state.' '.$working->zip;
+
+                                                        //get the match score between csv row and already existing rows in the database
+                                                        $matchScore = levenshtein($fullRecord,$fullRecordDB);
+
+                                                           // echo '[ '.$matchScore.']'; exit;
+
+                                                            if ($matchScore < 25) {
+                                                               // echo '<b style="color:red">MATCH SCORE: '.levenshtein($fullRecord,$fullRecordDB).'|'.$fullRecord.'--'.$fullRecordDB.'</b><br>';
+                                                                 continue;
+                                                                }else {     
+                                                         
+                                                                    
+                                                                $working->save();
                                                     
                                                 }
 
