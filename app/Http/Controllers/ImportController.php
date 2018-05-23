@@ -164,20 +164,25 @@ public function importCSV(Request $request)
                             //select all records from working table    
                             $working = \App\Working::all();
                             
-                             
+        
                                 //Levenshtein edit distance - loop thru working table records to find a match 
                                 foreach ($working as $working) {
+                                    
+                                  
+                                    
                                 $fullRecordDB = $working->fName.' '.$working->lName.' '.$working->addr1.' '.$working->addr2.' '.$working->city.' '.$working->state.' '.$working->zip;
-                                  //echo levenshtein($fullRecord,$fullRecordDB).'|'.$fullRecord.'--'.$fullRecordDB.'<br>';
+                                   
                                     //get the match score between csv row and already existing rows in the database
                                     $matchScore = levenshtein($fullRecord,$fullRecordDB);
                                         
                                        // echo '[ '.$matchScore.']'; exit;
                                     
-                                        if ($matchScore < 10) {
-                                         
-                                    
+                                        if ($matchScore < 25) {
+                                           // echo '<b style="color:red">MATCH SCORE: '.levenshtein($fullRecord,$fullRecordDB).'|'.$fullRecord.'--'.$fullRecordDB.'</b><br>';
+                                             continue;
                                             }else {
+                                            
+                                                // echo 'NO MATCH SCORE: '.levenshtein($fullRecord,$fullRecordDB).'|'.$fullRecord.'--'.$fullRecordDB.'<br>';
                                             
                                                     //CREATE NEW USER HE DOESN'T EXIST YET
 
