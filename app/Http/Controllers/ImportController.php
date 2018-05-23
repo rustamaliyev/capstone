@@ -35,7 +35,7 @@ $apiKey = 'AIzaSyCPt110uwWaetZfoerFQmzy4iWk2230frY';
         }
         
     
-    
+  
     
     $time = microtime(true) - $_SERVER["REQUEST_TIME_FLOAT"]; echo "Process Time: {$time}";  
                 
@@ -45,7 +45,7 @@ $apiKey = 'AIzaSyCPt110uwWaetZfoerFQmzy4iWk2230frY';
     
 public function importCSV(Request $request)
     {
-    echo 'Started File Processing';
+   
     
         $apiKey = 'AIzaSyCPt110uwWaetZfoerFQmzy4iWk2230frY';
         //sleep(1);
@@ -59,11 +59,7 @@ public function importCSV(Request $request)
             $file = $request->csvFile;
             $reader = Reader::createFromPath($file, 'r');   
             
-            
-            
-           
-            
-   
+     
             foreach ($reader as $index => $row) {
                 
     

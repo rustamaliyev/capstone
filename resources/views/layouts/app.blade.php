@@ -107,13 +107,14 @@
                 <div class="row">
                     <div class="col-lg-12">
                         <h1 class="page-header">Dashboard</h1>
+                        <!--
                         <div class="progress-bar"></div>
                         <div class="loading-progress"></div>
                         <div class="progress">
                             <div id="bulk-action-progbar" class="progress-bar progress-bar-striped active" role="progressbar" aria-valuenow="1" aria-valuemin="0" aria-valuemax="100" style="width:1%">                 
                             </div>
                         </div>
-                       
+                       --->
                         <div class="alert alert-info" role="alert" id="status"></div>
                         @yield('content')
                         
@@ -207,7 +208,7 @@
                
                 //https://www.jqueryscript.net/loading/Ajax-Progress-Bar-Plugin-with-jQuery-Bootstrap-progressTimer.html
                 var progress = $(".loading-progress").progressTimer({
-                  timeLimit: 10,
+                  //timeLimit: 10,
                   onFinish: function () {
                   
                 }
@@ -248,34 +249,38 @@
                    
                    if (e.lengthComputable) {
        
-                       alert(e.loaded);
-                      percentComplete = parseInt( (e.loaded / e.total * 100), 10);
-                      console.log(percentComplete);
-                      $('#bulk-action-progbar').data("aria-valuenow",percentComplete);
-                      $('#bulk-action-progbar').css("width",percentComplete+'%');
+                      //percentComplete = parseInt( (e.loaded / e.total * 100), 10);
+                      //console.log(percentComplete);
+                      //$('#bulk-action-progbar').data("aria-valuenow",percentComplete);
+                      //$('#bulk-action-progbar').css("width",percentComplete+'%');
+                      
+                         
+                       
+                       
 
                     }      
                       
-                    $('#status').html('Uploading File...');   
-                    $('#status').html('File Uploaded');
-               
+                    $('#status').html('<b>Uploading File...</b>');   
+                    $('#status').html('<b>File Uploaded</b>');
+                    $('#status').html('<b>Processing the file...</b>'); 
                    
                   }, false);
                   //Download progress, waiting for response from server
                   xhr.addEventListener("progress", function(e){
                       
                   
-                    $('#status').html('Processing the file...'); 
+                    
                       
                     if (e.lengthComputable) {
                         
-                            
+                        
                       //percentComplete = (e.loaded / e.total) * 100;
                       percentComplete = parseInt( (e.loaded / e.total * 100), 10);
    
-                      $('#bulk-action-progbar').data("aria-valuenow",percentComplete);
-                      $('#bulk-action-progbar').css("width",percentComplete+'%');
-
+                      //$('#bulk-action-progbar').data("aria-valuenow",percentComplete);
+                      //$('#bulk-action-progbar').css("width",percentComplete+'%');
+                      var percent = Math.round((e.loaded / e.total) * 100);
+                       
                     }
                       
                   
@@ -287,7 +292,9 @@
                     
                     
                         complete:function(){
-                            $('#status').html('File Processed.');   
+                            $('#status').html('File Processed.'.data);
+                            $('#status').removeClass('alert-info');
+                            $('#status').addClass('alert-success');   
                         },
                     
                     
