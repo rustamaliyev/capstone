@@ -42,13 +42,15 @@ class UserController extends Controller
            $modifiedAttributes = $working->getDirty();  
            //save changes to audit table  
             foreach($modifiedAttributes as $key => $value) {
+                
+            if($value)    {
               $audit = new Audit();   
               $audit->workingID = $id;
               $audit->fieldName = $key;
               $audit->fieldValue = $value;
               $audit->changedByUserID = $working->userID;    
               $audit->save();    
-                
+            }
             }  
              
           

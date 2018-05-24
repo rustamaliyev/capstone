@@ -9,7 +9,7 @@ use Auth;
 use League\Csv\Reader;
 use League\Csv\Statement;
 use Illuminate\Database\QueryException;
-
+use DB;
 class ImportController extends Controller
 {
     
@@ -63,7 +63,8 @@ public function importCSV(Request $request)
             foreach ($reader as $index => $row) {
                 
     
-                
+                $row = preg_replace('/[\x00-\x1F\x80-\xFF]/', '', $row);
+               
                 
                 //STEP ONE save raw data into staging table to maintina data integrity                        
                 //$row is an array where each item represent a CSV data cell
@@ -73,7 +74,7 @@ public function importCSV(Request $request)
                 $staging = new Staging();  
              
                 //SKIP IF FOLLOWING IS TRUE: IS HEADER ROW, ADDRESS OR CITY COLUMNS ARE EMPTY,ADDRESS1 CONTAINS P.O. BOX                
-                if($row[0] == 'FirstName' || $row[2] == '' || $row[4] == '' || preg_match('/(?:P(?:ost(?:al)?)?[\.\-\s]*(?:(?:O(?:ffice)?[\.\-\s]*)?B(?:ox|in|\b|\d)|o(?:ffice|\b)(?:[-\s]*\d)|code)|box[-\s\b]*\d)/i',$row[2]))
+     if($row[0] == 'FirstName' || $row[0] == 'First' || $row[2] == '' || $row[4] == '' || preg_match('/(?:P(?:ost(?:al)?)?[\.\-\s]*(?:(?:O(?:ffice)?[\.\-\s]*)?B(?:ox|in|\b|\d)|o(?:ffice|\b)(?:[-\s]*\d)|code)|box[-\s\b]*\d)/i',$row[2]))
                 {continue;}                
 
                 
@@ -116,9 +117,13 @@ public function importCSV(Request $request)
               
                     //STEP TWO CHECK THE ADDRESS VALIDITY VIA GOOGLE GEOCODING API
                     //DATA CLEANUP TO GET CORRECT RESULTS FROM GOOGLE
-                    $addr1 = str_replace("#", "apt", $row[2]); 
-                    $addressParams = $addr1.$row[3].$row[4].$row[5].$row[6];
+                    $addr1 = str_replace("#", "apt", $row[2]);
+                    $addr2 = str_replace("#", "apt", $row[3]);
+                    $addressParams = $addr1.$addr2.'+'.$row[4].$row[5].$row[6];
+                    $addressParams = str_replace(array('\'', '"'), '', $addressParams);
                     $addressParams = str_replace(" ", "+", $addressParams);
+                      
+               // echo $addressParams;
                 
                     //SEND DATA OVER TO GOOGLE API USING CURL
                     $validateAddress = "https://maps.googleapis.com/maps/api/geocode/json?address=".$addressParams."&sensor=false&key=".$apiKey;        
@@ -158,55 +163,30 @@ public function importCSV(Request $request)
                             
                             //build address1 string
                             $address = $address_out['street_number'].' '.$address_out['address'];
-                            $fullRecord = $row[0].' '.$row[1].' '.$address.' '.$address_out['unit'].' '.$address_out['city'].' '.$address_out['state'].' '.$address_out['zip'];
+                            //$fullRecord = $row[0].' '.$row[1].' '.$address.' '.$address_out['unit'].' '.$address_out['city'].' '.$address_out['state'].' '.$address_out['zip'];
                         //CHECK IF RECORD DOES NOT EXIST IN THE WORKING TABLE(WE CHECK FOR ADDRESS1 AND LAST NAME)
                
-               
-              
-                            
-                            
-                            
-                            $working = \App\Working::all();
-                          
-                            if(count($working) > 0) {
-                                
-                              
-                                
-                             //Levenshtein edit distance - loop thru working table records to find a match 
-                            foreach ($working as $working) {
-                               // echo $fullRecord.'<br>'; 
-                            $fullRecordDB = $working->fName.' '.$working->lName.' '.$working->addr1.' '.$working->addr2.' '.$working->city.' '.$working->state.' '.$working->zip;
-                            //get the match score between csv row and already existing rows in the database
-                            echo $matchScore = levenshtein($fullRecord,$fullRecordDB).'<br>';
-                                    if($matchScore < 20){
-                                                    
-                                               echo 'match found not saving'.$matchScore.' '.$fullRecord.' <--> '.$fullRecordDB.'<br>';
-                                               
-                                            }   
- 
+                        $match = DB::select('SELECT * FROM working WHERE fName LIKE "%'.$row[0].'%" AND lName LIKE "%'.$row[1].'%" OR addr1 LIKE "%'.$address.'%"');
+                            if (!$match) {
+                               //SAVE INTO WORKING TABLE BLOCK
+                                                   //CREATE NEW USER HE DOESN'T EXIST YET
+
+                                                    $fNameFirstChar = substr(strtolower($row[0]), 0, 1);
+                                                    //construct username based on first initial, last name and zip code 
+                                                    $username = $fNameFirstChar.strtolower($row[1]).$address_out['zip'];
+                                                    //clean up username from illegal chars
+                                                    $username = str_replace(['-', '.', ' '], "", $username); 
+
+                                                     if (User::where('username', '=', $username)->count() == 0) {      
+                                                        $userData = [
+                                                            'username' => $username,
+                                                            'password' => bcrypt('123456'),
+                                                            'isAdmin' => 0,
+                                                        ];
+                                                        $newUser = User::create($userData);  
+                                                         //}    
+                                                    //SAVE INTO WORKING TABLE
                                                       
-                                     else if($matchScore > 20) {
-                                                echo 'match NOT found saving'.$matchScore.' '.$fullRecord.' <--> '.$fullRecordDB.'<br>';
-                                         
-                                            //SAVE INTO WORKING TABLE BLOCK
-                                                   //CREATE NEW USER HE DOESN'T EXIST YET
-
-                                                    $fNameFirstChar = substr(strtolower($row[0]), 0, 1);
-                                                    //construct username based on first initial, last name and zip code 
-                                                    $username = $fNameFirstChar.strtolower($row[1]).$address_out['zip'];
-                                                    //clean up username from illegal chars
-                                                    $username = str_replace(['-', '.', ' '], "", $username); 
-
-                                                     if (User::where('username', '=', $username)->count() == 0) {      
-                                                        $userData = [
-                                                            'username' => $username,
-                                                            'password' => bcrypt('123456'),
-                                                            'isAdmin' => 0,
-                                                        ];
-                                                        $newUser = User::create($userData);  
-                                                         //}    
-                                                    //SAVE INTO WORKING TABLE
-                                                        echo 'SAVING: '.$row[0].' '.$row[1].' '.$address; 
                                                         $working = new Working();
                                                         $working->userID = $newUser->id;
                                                         $working->stagingID = $staging->id;
@@ -214,7 +194,7 @@ public function importCSV(Request $request)
                                                         $working->lName = $row[1];
                                                         $working->addr1 = $address;
                                                         if($address_out['unit'] !=='') {
-                                                        $working->addr2 ='# '.$address_out['unit'];
+                                                        $working->addr2 ='# '.ucfirst($address_out['unit']);
                                                         }
                                                         $working->city =  $address_out['city'];
                                                         $working->state = $address_out['state'];
@@ -235,15 +215,9 @@ public function importCSV(Request $request)
                                                             
                                                      }
                                          //END SAVE INTO WORKING TABLE BLOCK
-                                    }
-                           
-                                                   
-                               }   
-                              
-    
-                            }else {
-                                              echo 'empty table save one record';
-                                                    //SAVE INTO WORKING TABLE BLOCK
+                            } else {
+                           if(!count($match) > 1 ) {
+                           //SAVE INTO WORKING TABLE BLOCK
                                                    //CREATE NEW USER HE DOESN'T EXIST YET
 
                                                     $fNameFirstChar = substr(strtolower($row[0]), 0, 1);
@@ -261,7 +235,7 @@ public function importCSV(Request $request)
                                                         $newUser = User::create($userData);  
                                                          //}    
                                                     //SAVE INTO WORKING TABLE
-                                                         echo 'SAVING: '.$row[0].' '.$row[1].' '.$address;
+                                                      
                                                         $working = new Working();
                                                         $working->userID = $newUser->id;
                                                         $working->stagingID = $staging->id;
@@ -269,7 +243,7 @@ public function importCSV(Request $request)
                                                         $working->lName = $row[1];
                                                         $working->addr1 = $address;
                                                         if($address_out['unit'] !=='') {
-                                                        $working->addr2 ='# '.$address_out['unit'];
+                                                        $working->addr2 ='# '.ucfirst($address_out['unit']);
                                                         }
                                                         $working->city =  $address_out['city'];
                                                         $working->state = $address_out['state'];
@@ -290,8 +264,8 @@ public function importCSV(Request $request)
                                                             
                                                      }
                                          //END SAVE INTO WORKING TABLE BLOCK
-                                
-                            }
+                           }
+                      }
             
             }
             

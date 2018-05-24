@@ -42,11 +42,11 @@
                                                   <div class="col-md-12"></div>
                                                   <div class="form-group col-md-6">
                                                     <label for="name">First Name:</label>
-                                                    <input type="text" class="form-control" name="fName" value="{{$userInfo->fName}}">
+                                                    <input required type="text" class="form-control" name="fName" value="{{$userInfo->fName}}">
                                                   </div>
                                                   <div class="form-group col-md-6">
                                                     <label for="name">Last Name:</label>
-                                                    <input type="text" class="form-control" name="lName" value="{{$userInfo->lName}}">
+                                                    <input required type="text" class="form-control" name="lName" value="{{$userInfo->lName}}">
                                                   </div>  
                                                 </div>
                                                   
@@ -54,7 +54,7 @@
                                                   <div class="col-md-12"></div>
                                                   <div class="form-group col-md-12">
                                                     <label for="name">Address1:</label>
-                                                    <input type="text" class="form-control" name="addr1" value="{{$userInfo->addr1}}">
+                                                    <input required type="text" class="form-control" name="addr1" value="{{$userInfo->addr1}}">
                                                   </div>
                                                  
                                                 </div>
@@ -70,15 +70,15 @@
                                                   <div class="col-md-12"></div>
                                                   <div class="form-group col-md-4">
                                                     <label for="name">City:</label>
-                                                    <input type="text" class="form-control" name="city" value="{{$userInfo->city}}">
+                                                    <input required type="text" class="form-control" name="city" value="{{$userInfo->city}}">
                                                   </div>
                                                     <div class="form-group col-md-4">
                                                     <label for="name">State:</label>
-                                                    <input type="text" class="form-control" name="state" value="{{$userInfo->state}}">
+                                                    <input required type="text" class="form-control" name="state" value="{{$userInfo->state}}">
                                                   </div>
                                                     <div class="form-group col-md-4">
                                                     <label for="name">Zip:</label>
-                                                    <input type="text" class="form-control" name="zip" value="{{$userInfo->zip}}">
+                                                    <input required type="text" class="form-control" name="zip" value="{{$userInfo->zip}}">
                                                   </div>     
                                                  </div>
                                                   <div class="row">
