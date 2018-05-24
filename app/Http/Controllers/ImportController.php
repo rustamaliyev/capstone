@@ -145,7 +145,7 @@ public function importCSV(Request $request)
         
                 
                      //IF ANY RESULT FROM GOOGLE  
-                        if (!empty($validAddress['results'][0]['address_components'])) {            
+           if (!empty($validAddress['results'][0]['address_components'])) {            
                             
                             //get all address components from the api and store them a new array
                            $ac = $validAddress['results'][0]['address_components']; 
@@ -160,16 +160,36 @@ public function importCSV(Request $request)
                             $address = $address_out['street_number'].' '.$address_out['address'];
                             $fullRecord = $row[0].' '.$row[1].' '.$address.' '.$address_out['unit'].' '.$address_out['city'].' '.$address_out['state'].' '.$address_out['zip'];
                         //CHECK IF RECORD DOES NOT EXIST IN THE WORKING TABLE(WE CHECK FOR ADDRESS1 AND LAST NAME)
-                         //if (Working::where('addr1', '=', $address)->where('lName', '=', $row[1])->count() == 0) {   
-                            //select all records from working table    
+               
+               
+              
                             
                             
-        
-                               
-                                            
-                                                // echo 'NO MATCH SCORE: '.levenshtein($fullRecord,$fullRecordDB).'|'.$fullRecord.'--'.$fullRecordDB.'<br>';
-                                            
-                                                    //CREATE NEW USER HE DOESN'T EXIST YET
+                            
+                            $working = \App\Working::all();
+                          
+                            if(count($working) > 0) {
+                                
+                              
+                                
+                             //Levenshtein edit distance - loop thru working table records to find a match 
+                            foreach ($working as $working) {
+                               // echo $fullRecord.'<br>'; 
+                            $fullRecordDB = $working->fName.' '.$working->lName.' '.$working->addr1.' '.$working->addr2.' '.$working->city.' '.$working->state.' '.$working->zip;
+                            //get the match score between csv row and already existing rows in the database
+                            echo $matchScore = levenshtein($fullRecord,$fullRecordDB).'<br>';
+                                    if($matchScore < 20){
+                                                    
+                                               echo 'match found not saving'.$matchScore.' '.$fullRecord.' <--> '.$fullRecordDB.'<br>';
+                                               
+                                            }   
+ 
+                                                      
+                                     else if($matchScore > 20) {
+                                                echo 'match NOT found saving'.$matchScore.' '.$fullRecord.' <--> '.$fullRecordDB.'<br>';
+                                         
+                                            //SAVE INTO WORKING TABLE BLOCK
+                                                   //CREATE NEW USER HE DOESN'T EXIST YET
 
                                                     $fNameFirstChar = substr(strtolower($row[0]), 0, 1);
                                                     //construct username based on first initial, last name and zip code 
@@ -186,7 +206,7 @@ public function importCSV(Request $request)
                                                         $newUser = User::create($userData);  
                                                          //}    
                                                     //SAVE INTO WORKING TABLE
-
+                                                        echo 'SAVING: '.$row[0].' '.$row[1].' '.$address; 
                                                         $working = new Working();
                                                         $working->userID = $newUser->id;
                                                         $working->stagingID = $staging->id;
@@ -198,13 +218,7 @@ public function importCSV(Request $request)
                                                         }
                                                         $working->city =  $address_out['city'];
                                                         $working->state = $address_out['state'];
-
-                                                        if(is_int($address_out['zip'])) {
-                                                            $working->zip = $address_out['zip'];
-
-                                                        }else {
-                                                            $working->zip = '00000';
-                                                        } 
+                                                        $working->zip = $address_out['zip'];
 
 
                                                         $working->listName = $row[7]; 
@@ -216,45 +230,82 @@ public function importCSV(Request $request)
                                                         if (isset($row[9])) {
                                                          $working->previousAttendee = $row[9];
                                                         } 
-                                                         
-                                                     $working = \App\Working::all();    
-                                                     //Levenshtein edit distance - loop thru working table records to find a match 
-                                                    foreach ($working as $working) {
+                                    
+                                                        $working->save();
+                                                            
+                                                     }
+                                         //END SAVE INTO WORKING TABLE BLOCK
+                                    }
+                           
+                                                   
+                               }   
+                              
+    
+                            }else {
+                                              echo 'empty table save one record';
+                                                    //SAVE INTO WORKING TABLE BLOCK
+                                                   //CREATE NEW USER HE DOESN'T EXIST YET
+
+                                                    $fNameFirstChar = substr(strtolower($row[0]), 0, 1);
+                                                    //construct username based on first initial, last name and zip code 
+                                                    $username = $fNameFirstChar.strtolower($row[1]).$address_out['zip'];
+                                                    //clean up username from illegal chars
+                                                    $username = str_replace(['-', '.', ' '], "", $username); 
+
+                                                     if (User::where('username', '=', $username)->count() == 0) {      
+                                                        $userData = [
+                                                            'username' => $username,
+                                                            'password' => bcrypt('123456'),
+                                                            'isAdmin' => 0,
+                                                        ];
+                                                        $newUser = User::create($userData);  
+                                                         //}    
+                                                    //SAVE INTO WORKING TABLE
+                                                         echo 'SAVING: '.$row[0].' '.$row[1].' '.$address;
+                                                        $working = new Working();
+                                                        $working->userID = $newUser->id;
+                                                        $working->stagingID = $staging->id;
+                                                        $working->fName = $row[0];
+                                                        $working->lName = $row[1];
+                                                        $working->addr1 = $address;
+                                                        if($address_out['unit'] !=='') {
+                                                        $working->addr2 ='# '.$address_out['unit'];
+                                                        }
+                                                        $working->city =  $address_out['city'];
+                                                        $working->state = $address_out['state'];
+                                                        $working->zip = $address_out['zip'];
 
 
-                                            $fullRecordDB = $working->fName.' '.$working->lName.' '.$working->addr1.' '.$working->addr2.' '.$working->city.' '.$working->state.' '.$working->zip;
-
-                                                        //get the match score between csv row and already existing rows in the database
-                                                        $matchScore = levenshtein($fullRecord,$fullRecordDB);
-
-                                                           // echo '[ '.$matchScore.']'; exit;
-
-                                                            if ($matchScore < 25) {
-                                                               // echo '<b style="color:red">MATCH SCORE: '.levenshtein($fullRecord,$fullRecordDB).'|'.$fullRecord.'--'.$fullRecordDB.'</b><br>';
-                                                                 continue;
-                                                                }else {     
-                                                         
-                                                                    
-                                                                $working->save();
-                                                    
-                                                }
-
-                                        }    
-                                }
-                            
-                        }     
+                                                        $working->listName = $row[7]; 
+                                                        //check if cash donation column exist
+                                                        if (isset($row[8]) && is_numeric($row[8])) {
+                                                         $working->cashDonation = $row[8];
+                                                        } 
+                                                        //check if previous attendee column exist
+                                                        if (isset($row[9])) {
+                                                         $working->previousAttendee = $row[9];
+                                                        } 
+                                    
+                                                        $working->save();
+                                                            
+                                                     }
+                                         //END SAVE INTO WORKING TABLE BLOCK
+                                
+                            }
             
-                }
+            }
             
-   
             
-            $time = microtime(true) - $_SERVER["REQUEST_TIME_FLOAT"];
-            echo "Completed! Process Time: {$time}";  
             
             //return redirect('home')->with('success', 'Success! File has been uploaded!'.'Total Processing Time: '.$time. ' Sorry I am slow there was a lot to process!');
         
         }
-    }
+    
+      }
+ $time = microtime(true) - $_SERVER["REQUEST_TIME_FLOAT"];
+ echo "Completed! Process Time: {$time}";         
+//end of main function
+}
     
   
     
