@@ -35,7 +35,6 @@ $apiKey = 'AIzaSyCPt110uwWaetZfoerFQmzy4iWk2230frY';
         }
         
     
-  
     
     $time = microtime(true) - $_SERVER["REQUEST_TIME_FLOAT"]; echo "Process Time: {$time}";  
                 
@@ -80,6 +79,8 @@ public function importCSV(Request $request)
                 
                 
                     try {
+                        
+                          $staging->imported = 'no';
                           $staging->fName = $row[0];
                             $staging->lName = $row[1];
                             $staging->addr1 = $row[2];
@@ -212,12 +213,17 @@ public function importCSV(Request $request)
                                                         } 
                                     
                                                         $working->save();
+                                                         
+                                                        //capture in staging table that this record was imported 
+                                                        $staging = Staging::find($staging->id);
+                                                        $staging->imported = 'yes'; 
+                                                        $staging->save();  
                                                             
                                                      }
                                          //END SAVE INTO WORKING TABLE BLOCK
-                            } else {
-                           if(!count($match) > 1 ) {
-                           //SAVE INTO WORKING TABLE BLOCK
+                                                    } else {
+                                                   if(!count($match) > 1 ) {
+                                                   //SAVE INTO WORKING TABLE BLOCK
                                                    //CREATE NEW USER HE DOESN'T EXIST YET
 
                                                     $fNameFirstChar = substr(strtolower($row[0]), 0, 1);
@@ -259,8 +265,15 @@ public function importCSV(Request $request)
                                                         if (isset($row[9])) {
                                                          $working->previousAttendee = $row[9];
                                                         } 
-                                    
+                                                        
                                                         $working->save();
+                                                         
+                                                         
+                                                        //capture in staging table that this record was imported 
+                                                        $staging = Staging::find($staging->id);
+                                                        $staging->imported = 'yes'; 
+                                                        $staging->save();  
+                                                         
                                                             
                                                      }
                                          //END SAVE INTO WORKING TABLE BLOCK

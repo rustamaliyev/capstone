@@ -249,15 +249,7 @@
                    
                    if (e.lengthComputable) {
        
-                      //percentComplete = parseInt( (e.loaded / e.total * 100), 10);
-                      //console.log(percentComplete);
-                      //$('#bulk-action-progbar').data("aria-valuenow",percentComplete);
-                      //$('#bulk-action-progbar').css("width",percentComplete+'%');
-                      
-                         
-                       
-                       
-
+               
                     }      
                       
                     $('#status').html('<b>Uploading File...</b>');   
@@ -273,12 +265,8 @@
                       
                     if (e.lengthComputable) {
                         
-                        
-                      //percentComplete = (e.loaded / e.total) * 100;
                       percentComplete = parseInt( (e.loaded / e.total * 100), 10);
    
-                      //$('#bulk-action-progbar').data("aria-valuenow",percentComplete);
-                      //$('#bulk-action-progbar').css("width",percentComplete+'%');
                       var percent = Math.round((e.loaded / e.total) * 100);
                        
                     }
