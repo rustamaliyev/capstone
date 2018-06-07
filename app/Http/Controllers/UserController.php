@@ -12,14 +12,10 @@ use League\Csv\Statement;
 
 class UserController extends Controller
 {
- 	public function index()
-        {
-
-        }
-    
+ 	
      public function edit($id)
         {
-         
+            //THIS METHOD GETS CURRENT USER INFO
             $userInfo = Working::where('id',$id)->first();
   
             return view('user.edit')->with('userInfo', $userInfo);
@@ -27,7 +23,7 @@ class UserController extends Controller
     
         public function update(Request $request, $id)
         {
-
+           //THIS METHOD UPDATES CURRENT USER INFO
            $working = Working::find($id);
            $working->fName = $request['fName'];
            $working->lName = $request['lName'];    
@@ -38,7 +34,7 @@ class UserController extends Controller
            $working->zip = $request['zip'];
            $working->cashDonation = $request['cashDonation'];  
             
- 
+            //ON UPDATE IT SAVES CHANGES INTO AUDIT TABLE
            $modifiedAttributes = $working->getDirty();  
            //save changes to audit table  
             foreach($modifiedAttributes as $key => $value) {
@@ -50,15 +46,13 @@ class UserController extends Controller
               $audit->fieldValue = $value;
               $audit->changedByUserID = $working->userID;    
               $audit->save();    
-            }
+                }
             }  
              
           
            $working->save();
             
-            
-            
-            
+           //ALL DONE REDIRECT BACK        
            return redirect('home');
 
 

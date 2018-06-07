@@ -13,55 +13,23 @@ use DB;
 class ImportController extends Controller
 {
     
-public function importCSV2(Request $request){
- 
-$apiKey = 'AIzaSyCPt110uwWaetZfoerFQmzy4iWk2230frY';
-  
-
-        //check if file is not empty
-        if ($request->hasFile('csvFile')) {
-            
-             //process the file
-            $file = $request->csvFile;
-            $reader = Reader::createFromPath($file, 'r');
-                            
-            $size =  sizeof($reader);
-            foreach ($reader as $index => $row) {
-                 
-                
-                }
-            
-          
-        }
-        
-    
-    
-    $time = microtime(true) - $_SERVER["REQUEST_TIME_FLOAT"]; echo "Process Time: {$time}";  
-                
-    
-}
-    
     
 public function importCSV(Request $request)
     {
    
-    
-        $apiKey = 'AIzaSyCPt110uwWaetZfoerFQmzy4iWk2230frY';
-        //sleep(1);
-    
+        //set google api key
+        $apiKey = 'AIzaSyCPt110uwWaetZfoerFQmzy4iWk2230frY';    
  
         //check if file is not empty
-        if ($request->hasFile('csvFile')) {
-            
+        if ($request->hasFile('csvFile')) {  
               
             //process the file
             $file = $request->csvFile;
             $reader = Reader::createFromPath($file, 'r');   
             
-     
+            //loop thru the file
             foreach ($reader as $index => $row) {
-                
-    
+                // remove illegal chars
                 $row = preg_replace('/[\x00-\x1F\x80-\xFF]/', '', $row);
                
                 
@@ -70,14 +38,14 @@ public function importCSV(Request $request)
                 //$index is the CSV row index
                 
 
-                $staging = new Staging();  
+                 $staging = new Staging();  
              
                 //SKIP IF FOLLOWING IS TRUE: IS HEADER ROW, ADDRESS OR CITY COLUMNS ARE EMPTY,ADDRESS1 CONTAINS P.O. BOX                
      if($row[0] == 'FirstName' || $row[0] == 'First' || $row[2] == '' || $row[4] == '' || preg_match('/(?:P(?:ost(?:al)?)?[\.\-\s]*(?:(?:O(?:ffice)?[\.\-\s]*)?B(?:ox|in|\b|\d)|o(?:ffice|\b)(?:[-\s]*\d)|code)|box[-\s\b]*\d)/i',$row[2]))
                 {continue;}                
 
                 
-                
+                    //catch any mysql exceptions
                     try {
                         
                           $staging->imported = 'no';
@@ -115,7 +83,7 @@ public function importCSV(Request $request)
                                 continue;
                             }      
                 
-              
+                
                     //STEP TWO CHECK THE ADDRESS VALIDITY VIA GOOGLE GEOCODING API
                     //DATA CLEANUP TO GET CORRECT RESULTS FROM GOOGLE
                     $addr1 = str_replace("#", "apt", $row[2]);
@@ -124,8 +92,6 @@ public function importCSV(Request $request)
                     $addressParams = str_replace(array('\'', '"'), '', $addressParams);
                     $addressParams = str_replace(" ", "+", $addressParams);
                       
-               // echo $addressParams;
-                
                     //SEND DATA OVER TO GOOGLE API USING CURL
                     $validateAddress = "https://maps.googleapis.com/maps/api/geocode/json?address=".$addressParams."&sensor=false&key=".$apiKey;        
                         $ch = curl_init();
@@ -145,13 +111,9 @@ public function importCSV(Request $request)
                               'zip'=>array('postal_code'), 
                             ); 
                            
-                              
-                            
-                            //return $address_out; 
-        
-                
+                          
                      //IF ANY RESULT FROM GOOGLE  
-           if (!empty($validAddress['results'][0]['address_components'])) {            
+                    if (!empty($validAddress['results'][0]['address_components'])) {            
                             
                             //get all address components from the api and store them a new array
                            $ac = $validAddress['results'][0]['address_components']; 
@@ -164,12 +126,12 @@ public function importCSV(Request $request)
                             
                             //build address1 string
                             $address = $address_out['street_number'].' '.$address_out['address'];
-                            //$fullRecord = $row[0].' '.$row[1].' '.$address.' '.$address_out['unit'].' '.$address_out['city'].' '.$address_out['state'].' '.$address_out['zip'];
+                            
                         //CHECK IF RECORD DOES NOT EXIST IN THE WORKING TABLE(WE CHECK FOR ADDRESS1 AND LAST NAME)
                
                         $match = DB::select('SELECT * FROM working WHERE fName LIKE "%'.$row[0].'%" AND lName LIKE "%'.$row[1].'%" OR addr1 LIKE "%'.$address.'%"');
                             if (!$match) {
-                               //SAVE INTO WORKING TABLE BLOCK
+                               //IF NO RECORDS YET IN DB CONTINUE SAVING INTO WORKING TABLE
                                                    //CREATE NEW USER HE DOESN'T EXIST YET
 
                                                     $fNameFirstChar = substr(strtolower($row[0]), 0, 1);
@@ -186,7 +148,7 @@ public function importCSV(Request $request)
                                                         ];
                                                         $newUser = User::create($userData);  
                                                          //}    
-                                                    //SAVE INTO WORKING TABLE
+                                                    //SAVE RECORD INTO WORKING TABLE
                                                       
                                                         $working = new Working();
                                                         $working->userID = $newUser->id;
@@ -220,11 +182,11 @@ public function importCSV(Request $request)
                                                         $staging->save();  
                                                             
                                                      }
-                                         //END SAVE INTO WORKING TABLE BLOCK
+                                                    //END SAVE RECORD INTO WORKING TABLE BLOCK
                                                     } else {
                                                    if(!count($match) > 1 ) {
-                                                   //SAVE INTO WORKING TABLE BLOCK
-                                                   //CREATE NEW USER HE DOESN'T EXIST YET
+                                                   //SAVE RECORD INTO WORKING TABLE BLOCK
+                                                   //CREATE NEW USER
 
                                                     $fNameFirstChar = substr(strtolower($row[0]), 0, 1);
                                                     //construct username based on first initial, last name and zip code 
@@ -283,12 +245,12 @@ public function importCSV(Request $request)
             }
             
             
-            
-            //return redirect('home')->with('success', 'Success! File has been uploaded!'.'Total Processing Time: '.$time. ' Sorry I am slow there was a lot to process!');
+          
         
         }
     
       }
+//RETURN PROCESSING TIME    
  $time = microtime(true) - $_SERVER["REQUEST_TIME_FLOAT"];
  echo "Completed! Process Time: {$time}";         
 //end of main function
@@ -302,7 +264,7 @@ public function importCSV(Request $request)
     public function getAllRecords()
     {
         
-        //$working = Working::all();
+        //THIS METHOD RETURNS ALL RECORDS FROM THE WORKING TABLE
         $working = Working::with('user')->get();
         echo '{ "data":'.$working->toJson().'}';
 
@@ -311,7 +273,7 @@ public function importCSV(Request $request)
     
     public function deleteAllRecords()
     {
-        
+        //THIS METHOD DELETES ALL RECORDS IN ALL TABLES
         \App\Working::query()->delete();
         \App\Staging::query()->delete();
         \App\User::query()->where('isAdmin',0)->delete();
